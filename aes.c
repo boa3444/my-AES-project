@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/rand.h>
+
+
+
+#define BLOCKSIZE 16
 void pkcs_padding( unsigned char ** , int *);
 void SubBytes( unsigned char state[][4] );
 void ShiftRows( unsigned char state[][4]);
@@ -63,10 +67,18 @@ unsigned char Rcon[11][4] = {
     {0x36, 0x00, 0x00, 0x00}
     };
 unsigned char key_schedule[44][4];
+int cbc_decrypt(const unsigned char *, int, const unsigned char iv[16],unsigned char *, int *);
+
+
+
+
+
+
 int main()
 {
     unsigned char * user_input , buffer[1000];
- scanf("%s" , buffer);
+    scanf(" %[^\n]", buffer);
+
     int len_input = strlen(buffer);
     user_input = malloc( sizeof( unsigned char ) * (len_input + 1)); // 1 for null terminator in buffer
     memcpy( user_input , buffer, sizeof(unsigned char) * (len_input + 1));
@@ -135,6 +147,35 @@ int main()
             }
         }
     }
+
+	printf("\nEncrypted Cipher (Hex):\n");
+	for (int z = 0; z < len_input; z++) {
+	printf("%02X ", cipher_buffer[z]);
+	}
+	printf("\n");
+
+	//CBC DECRYPT CALl/
+	int out_len = 0;
+	unsigned char *plaintext = (unsigned char *)malloc(len_input);
+	if (!plaintext) {
+	fprintf(stderr, "malloc failed for plaintext\n");
+	return 1;
+	}
+
+	int rc = cbc_decrypt(cipher_buffer, len_input, iv, plaintext, &out_len);
+	if (rc != 0) {
+	fprintf(stderr, "cbc_decrypt failed (code %d)\n", rc);
+	free(plaintext);
+	return 1;
+	}
+
+	printf("\nDecrypted Text (Full Line):\n");
+	fwrite(plaintext, 1, out_len, stdout);
+	printf("\n");
+
+	free(plaintext);
+
+
     return 0;
 }
 void pkcs_padding ( unsigned char ** poi_to_arr , int * len_arr)
@@ -214,7 +255,7 @@ unsigned char g_mult ( unsigned char byte , unsigned char mult_with)
     else
     {
         printf("Factor problem in GF(2^8) multiplication");
-        return ;
+        exit(1);
     }
 }
 void MixColumns ( unsigned char state[][4])
