@@ -4,8 +4,10 @@
 #include <openssl/rand.h>
 
 void pkcs_padding( unsigned char ** , int *);
-void SubBytes( unsigned char *
 
+void SubBytes( unsigned char state[][4] );
+
+void ShiftRows( unsigned char state[][4] , int row_num);
 
 static const uint8_t sbox[256] = {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
@@ -58,6 +60,8 @@ int main()
 //	{
 //		printf("%02x ", user_input[i]);
 //	}
+//	printf("\n");
+//
 
 //	Store the user_input in state_matrix
 	unsigned char state_matrix[4][4];
@@ -72,12 +76,27 @@ int main()
 	}
 
 
+//	for ( int c=0;c<4;c++)
+//	{
+//		for ( int r = 0 ;r< 4;r++)
+//		{
+//			printf("%02x " , state_matrix[r][c]);
+//		}
+//		printf("\n");
+//	}
+
+
 	unsigned char iv[16];
-	if ( RAND_bytes(iv , sizeof(iv)) == NULL)
+	if ( RAND_bytes(iv , sizeof(iv)) != 1)
 	{
 		printf("IV couldn't be generated\n");
 		return 1;
 	}
+
+//	for ( int i =0;i<16;i++)
+//	{
+//		printf("%02x\n" ,iv[i]);
+//	}
 
 
 	return 0;
@@ -114,3 +133,39 @@ void pkcs_padding ( unsigned char ** poi_to_arr , int * len_arr)
 	}
 
 }
+
+
+void SubBytes( unsigned char state[][4])
+{
+//	column-wise operate kiya hai ( doesnt matter in this step)
+	for  ( int c = 0;c<4;c++)
+	{
+		for ( int r=0;r<4;r++)
+		{
+			state[r][c] = sbox[state[r][c]];
+		}
+	}
+
+}
+
+
+void ShiftRows( unsigned char state[][4] , int row_num)
+{
+	while ( row_num <4)
+	{
+		for ( int times = 0; times < row_num; times++)
+		{
+
+			for ( int c = 0;c<3;c++)
+			{
+				int temp = state[row_num][c+1];
+				state[row_num][c+1]= state[row_num][c];
+				state[row_num][c] = temp;
+			}
+		}
+
+		row_num++;
+	}
+}
+
+ 
