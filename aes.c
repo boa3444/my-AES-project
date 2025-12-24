@@ -9,6 +9,11 @@ void SubBytes( unsigned char state[][4] );
 
 void ShiftRows( unsigned char state[][4] , int row_num);
 
+unsigned char g_mult ( unsigned char , unsigned char);
+
+void MixColumns ( unsigned char state[][4]);
+
+void KeyExpansion( unsigned 
 static const uint8_t sbox[256] = {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
     0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -98,7 +103,7 @@ int main()
 //		printf("%02x\n" ,iv[i]);
 //	}
 
-
+	MixColumns(state_matrix,1 );
 	return 0;
 }
 
@@ -169,3 +174,90 @@ void ShiftRows( unsigned char state[][4] , int row_num)
 }
 
  
+
+unsigned char g_mult ( unsigned char byte , unsigned char mult_with)
+{
+	unsigned char result;
+	if ( mult_with == 1)
+		return byte;
+	else if ( mult_with == 2)
+	{
+		if ( byte & 0x80 )
+			result= (byte << 1 ) ^ 0x1B;
+		else
+			result = byte << 1;
+		return result;
+	}
+
+	else if ( mult_with == 3)
+	{
+		unsigned char temp = g_mult(byte , 2);
+		result = temp ^ byte;
+		return result;
+	}
+
+	else
+		printf("Factor problem in GF(2^8) multiplication");
+}
+
+void MixColumns ( unsigned char state[][4])
+{
+	//manipulate column wise
+
+	//IDEA1:
+	//store the columns row-wise in a diff array
+//
+//	unsigned char array[4][4];
+//	for ( int r = 0 ;r< 4;r++)
+//	{
+//		for (int c = 0 ;c< 4;c++)
+//		{
+//			array[c][r]= state[r][c];
+//		}
+//	}
+
+//	for ( int r =0;r<4;r++)
+//	{
+//		for ( int c =0;c<4;c++)
+//		{
+//			printf("%d ", state[r][c]);
+//		}
+//		printf("\n");
+//	}
+//	printf("array mat:\n");
+//	for ( int r =0;r<4;r++)
+//	{
+//		for ( int c =0;c<4;c++)
+//		{
+//			printf("%d ", array[r][c]);
+//		}
+//		printf("\n");
+//	}
+
+	//IDEA2: ( better idea)
+	unsigned char (*arr_poi)[4];
+	for ( int c = 0 ;c< 4;c++)
+	{
+		for ( int r =0;r<4;r++)
+		{
+			*arr_poi[r] = state[r][c]; //columns being saved at arr_poi
+		}
+
+//		for ( int i =0;i< 4;i++)
+//		{
+//			printf("%02x " , *arr_poi[i]);
+//		}
+
+		state[0][c] = g_mult(*arr_poi[0] , 0x02) ^ g_mult(*arr_poi[1] ^ *arr_poi[2] ^ *arr_poi[3];
+		state[1][c] = *arr_poi[0] ^ g_mult( *arr_poi[1],0x02) ^ g_mult(*arr_poi[2], 0x03) ^ *arr_poi[3];
+		state[2][c] = *arr_poi[0] ^ *arr_poi[1] ^ g_mult(*arr_poi[2] , 0x02) ^ g_mult(*arr_poi[3] , 0x03);
+		state[3][c] = g_mult(*arr_poi[0] , 0x03) ^ *arr_poi[1] ^ *arr_poi[2] ^ g_mult(*arr_poi[3] , 0x02);
+
+
+
+	}
+
+
+
+}
+
