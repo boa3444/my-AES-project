@@ -13,7 +13,8 @@ unsigned char g_mult ( unsigned char , unsigned char);
 
 void MixColumns ( unsigned char state[][4]);
 
-void KeyExpansion( unsigned 
+void KeyExpansion( unsigned char initial_key[16]);
+
 static const uint8_t sbox[256] = {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
     0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -103,7 +104,14 @@ int main()
 //		printf("%02x\n" ,iv[i]);
 //	}
 
-	MixColumns(state_matrix,1 );
+	unsigned char key[16];
+	if ( RAND_bytes(key , sizeof(key) != 1)
+	{
+		printf("Couldnt generate key\n");
+		return 1;
+	}
+
+
 	return 0;
 }
 
@@ -261,3 +269,4 @@ void MixColumns ( unsigned char state[][4])
 
 }
 
+void KeyExpansion( unsigned char initial_key[16])
