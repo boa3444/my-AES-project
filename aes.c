@@ -270,3 +270,22 @@ void MixColumns ( unsigned char state[][4])
 }
 
 void KeyExpansion( unsigned char initial_key[16])
+{
+
+	unsigned char temp_matrix[4][4];
+	unsigned char (*key_schedule) [44] = &temp_matrix;
+
+	int i =0;
+	for ( int r = 0;r<4;r++)
+	{
+		for ( int c- 0 ; c< 4;c++)
+		{
+			temp_matrix[r][c] = initial_key[i] ;
+			i++;
+		}
+	}
+
+	for ( int 
+
+
+}

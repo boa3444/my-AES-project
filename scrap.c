@@ -6,11 +6,37 @@
 
 void display ( unsigned char hexa)
 {
-	printf("%02x" , hexa);
-}
 
+
+
+}
 int main()
 {
-	display(0x05);
+	int matrix[3][3]= {
+		{1,2,3},
+		{12,12,12},
+		{7,66,7}
+		};
+
+	int (*p) [3] = &matrix[0];
+//
+//	for ( int i = 0 ; i < 3;i++)
+//	{
+//		printf("%d " , (*p)[i]);
+//	}
+
+	printf("%d\n", *(*(p + 2) + 2));
+	printf("lala\n");
+	for ( int r = 0 ; r< 9;r += 3)
+	{
+		for ( int i = 0 ; i< 3;i++)
+		{
+				printf("%d " , *( (*p + r) + i) );
+
+
+		}
+
+	printf("\n");
+	}
 	return 0 ;
 }
