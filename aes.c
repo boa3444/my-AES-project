@@ -14,6 +14,8 @@ unsigned char g_mult ( unsigned char , unsigned char);
 void MixColumns ( unsigned char state[][4]);
 
 void KeyExpansion( unsigned char initial_key[16]);
+void RotWord( unsigned char key_schedule_row[4]);
+void SubWord( unsigned char key_schedule_row[4]);
 
 static const uint8_t sbox[256] = {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
@@ -49,6 +51,13 @@ static const uint8_t sbox[256] = {
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68,
     0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 };
+
+
+unsigned char Rcon[11] = {
+    0x00,0x01, 0x02, 0x04, 0x08, 0x10,
+    0x20, 0x40, 0x80, 0x1B, 0x36
+};
+
 
 
 int main()
@@ -269,23 +278,69 @@ void MixColumns ( unsigned char state[][4])
 
 }
 
+
+void RotWord( unsigned char key_schedule_row[4])
+{
+	//rotate word by 1 byte left
+	unsigned char temp =key_schedule_row[0];
+
+	key_schedule_row[0] = 	key_schedule_row[1];
+	key_schedule_row[1] =	key_schedule_row[2];
+	key_schedule_row[2]=	key_schedule_row[3];
+	key_schedule_row[3] = temp;
+
+}
+
+
+void SubWord( unsigned char key_schedule_row[4])
+{
+
+	for ( int i = 0 ; i < 4;i++)
+	{
+		key_schedule_row[i] = sbox[key_schedule_row[i]];
+	}
+
+}
+//
+//void Rcon( unsigned char key_schedule_row[4])
+//{
+//	//call the function only if the word we are working with's index is i % 4 ==0
+//
+//	
+//
+//}
 void KeyExpansion( unsigned char initial_key[16])
 {
 
 	unsigned char temp_matrix[4][4];
-	unsigned char (*key_schedule) [44] = &temp_matrix;
-
+	unsigned char key_schedule [44][4];
 	int i =0;
-	for ( int r = 0;r<4;r++)
+	unsigned char (*temp)[4];
+	for ( int r = 0 ; r < 4;r++)
 	{
-		for ( int c- 0 ; c< 4;c++)
+		for ( int c = 0 ; c< 4;c++)
 		{
-			temp_matrix[r][c] = initial_key[i] ;
+			key_schedule[r][c] = initial_key[i];
 			i++;
 		}
 	}
 
-	for ( int 
+	for ( int r = 4;r< 44;r++)
+	{
+		if ( r % 4 == 0)
+		{
+			temp = &key_schedule[r-1] ; //temp points at a word ( key_schedule's row )
+			RotWord();
+			SubWord(*temp);
+			temp[0] ^= rcon[r/4];
+			key_schedule[r] = key_schedule[r-4]  ^ (*temp);
+		}
 
+		else if ( r % 4 != 0)
+		{
+			key_schedule[r]=key_schedule[r-4] ^ key_Schedule[r-1];
+		}
+	}
 
 }
+
