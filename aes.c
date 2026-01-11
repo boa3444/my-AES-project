@@ -13,7 +13,9 @@ unsigned char g_mult ( unsigned char , unsigned char);
 
 void MixColumns ( unsigned char state[][4]);
 
-void KeyExpansion( unsigned char initial_key[16]);
+void xor_4( unsigned char arr1[4] , unsigned char arr2[4], unsigned char resultant_arr[4]);
+
+void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44][4])
 void RotWord( unsigned char key_schedule_row[4]);
 void SubWord( unsigned char key_schedule_row[4]);
 
@@ -114,6 +116,9 @@ int main()
 //	}
 
 	unsigned char key[16];
+	unsigned char key_schedule[44][4];
+	KeyExpansion( key, key_schedule);
+
 	if ( RAND_bytes(key , sizeof(key) != 1)
 	{
 		printf("Couldnt generate key\n");
@@ -306,16 +311,25 @@ void SubWord( unsigned char key_schedule_row[4])
 //{
 //	//call the function only if the word we are working with's index is i % 4 ==0
 //
-//	
+//
 //
 //}
-void KeyExpansion( unsigned char initial_key[16])
-{
 
-	unsigned char temp_matrix[4][4];
-	unsigned char key_schedule [44][4];
+void xor_4( unsigned char arr1[4] , unsigned char arr2[4], unsigned char resultant_arr[4])
+{
+	int common_length = 4;
+
+	for ( int i=0;i<common_length;i++)
+	{
+		resultant_arr[i]= arr1[i] ^ arr2[i];
+	}
+}
+
+void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44][4])
+{
+//	unsigned char key_schedule [44][4];
 	int i =0;
-	unsigned char (*temp)[4];
+	unsigned char temp[4];
 	for ( int r = 0 ; r < 4;r++)
 	{
 		for ( int c = 0 ; c< 4;c++)
@@ -325,22 +339,22 @@ void KeyExpansion( unsigned char initial_key[16])
 		}
 	}
 
+	// int * and int (*) [4]
 	for ( int r = 4;r< 44;r++)
 	{
 		if ( r % 4 == 0)
 		{
-			temp = &key_schedule[r-1] ; //temp points at a word ( key_schedule's row )
-			RotWord();
-			SubWord(*temp);
+			memcpy(temp,key_schedule[r-1], 4) ; //temp points at a word ( key_schedule's row )
+			RotWord(temp);
+			SubWord(temp);
 			temp[0] ^= rcon[r/4];
-			key_schedule[r] = key_schedule[r-4]  ^ (*temp);
+			xor_4(&key_schedule[r-4][0] ,temp, &key_schedule[r][0]);
 		}
 
 		else if ( r % 4 != 0)
 		{
-			key_schedule[r]=key_schedule[r-4] ^ key_Schedule[r-1];
+			xor_4(&key_schedule[r-4][0] , &key_schedule[r-1][0], &key_schedule[r][0]);
 		}
 	}
 
 }
-
