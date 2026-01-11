@@ -14,10 +14,11 @@ unsigned char g_mult ( unsigned char , unsigned char);
 void MixColumns ( unsigned char state[][4]);
 
 void xor_4( unsigned char arr1[4] , unsigned char arr2[4], unsigned char resultant_arr[4]);
-
-void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44][4])
+void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44][4]);
 void RotWord( unsigned char key_schedule_row[4]);
 void SubWord( unsigned char key_schedule_row[4]);
+
+void AddRoundKey ( int round_num ,unsigned char key_schedule[44][4], unsigned char state_matrix[4][4] );
 
 static const uint8_t sbox[256] = {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
@@ -55,11 +56,19 @@ static const uint8_t sbox[256] = {
 };
 
 
-unsigned char Rcon[11] = {
-    0x00,0x01, 0x02, 0x04, 0x08, 0x10,
-    0x20, 0x40, 0x80, 0x1B, 0x36
-};
-
+unsigned char Rcon[11][4] = {
+	{0x00, 0x00, 0x00, 0x00},
+	{0x01, 0x00, 0x00, 0x00},
+	{0x02, 0x00, 0x00, 0x00},
+	{0x04, 0x00, 0x00, 0x00},
+	{0x08, 0x00, 0x00, 0x00},
+	{0x10, 0x00, 0x00, 0x00},
+	{0x20, 0x00, 0x00, 0x00},
+	{0x40, 0x00, 0x00, 0x00},
+	{0x80, 0x00, 0x00, 0x00},
+	{0x1B, 0x00, 0x00, 0x00},
+	{0x36, 0x00, 0x00, 0x00}
+	};
 
 
 int main()
@@ -104,7 +113,7 @@ int main()
 
 
 	unsigned char iv[16];
-	if ( RAND_bytes(iv , sizeof(iv)) != 1)
+	if ( (RAND_bytes(iv , sizeof(iv))) != 1)
 	{
 		printf("IV couldn't be generated\n");
 		return 1;
@@ -119,12 +128,32 @@ int main()
 	unsigned char key_schedule[44][4];
 	KeyExpansion( key, key_schedule);
 
-	if ( RAND_bytes(key , sizeof(key) != 1)
+	if ( RAND_bytes(key , sizeof(key)) != 1)
 	{
-		printf("Couldnt generate key\n");
+		printf("Couldnt generate the main key\n");
 		return 1;
 	}
 
+	printf("len_input:%d \n" , len_input);
+
+	//using iv for block 1
+	i=0;
+	for ( int c=0;c<4;c++)
+	{
+		for ( int r = 0;r<4;r++)
+		{
+			state_matrix[r][c] ^= iv[i];
+			i++;
+		}
+	}
+
+	//aes encryption:
+//	for ( int b=1;b<= (len_input/16);b++)
+
+	for ( int round=1;round<= 10;round++)
+	{
+		SubBytes(state_matrix);
+	}
 
 	return 0;
 }
@@ -270,7 +299,7 @@ void MixColumns ( unsigned char state[][4])
 //			printf("%02x " , *arr_poi[i]);
 //		}
 
-		state[0][c] = g_mult(*arr_poi[0] , 0x02) ^ g_mult(*arr_poi[1] ^ *arr_poi[2] ^ *arr_poi[3];
+		state[0][c] = g_mult(*arr_poi[0] , 0x02) ^ g_mult(*arr_poi[1], 0x03) ^ *arr_poi[2] ^ *arr_poi[3];
 		state[1][c] = *arr_poi[0] ^ g_mult( *arr_poi[1],0x02) ^ g_mult(*arr_poi[2], 0x03) ^ *arr_poi[3];
 		state[2][c] = *arr_poi[0] ^ *arr_poi[1] ^ g_mult(*arr_poi[2] , 0x02) ^ g_mult(*arr_poi[3] , 0x03);
 		state[3][c] = g_mult(*arr_poi[0] , 0x03) ^ *arr_poi[1] ^ *arr_poi[2] ^ g_mult(*arr_poi[3] , 0x02);
@@ -347,7 +376,7 @@ void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44]
 			memcpy(temp,key_schedule[r-1], 4) ; //temp points at a word ( key_schedule's row )
 			RotWord(temp);
 			SubWord(temp);
-			temp[0] ^= rcon[r/4];
+			temp[0] ^= Rcon[r/4][0];
 			xor_4(&key_schedule[r-4][0] ,temp, &key_schedule[r][0]);
 		}
 
@@ -358,3 +387,26 @@ void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44]
 	}
 
 }
+
+//understand the dynamics of expanded keys and how they are spreaded
+// 4 words used in each round i.e. 4 rows
+
+
+void AddRoundKey ( int round_num,unsigned char key_schedule[44][4], unsigned char state_matrix[4][4] )
+{
+	int w_ind = 0;
+	for ( int reference = 0 ; reference < round_num; reference++)
+	{
+		w_ind +=4;
+	}
+
+	for ( int c = 0 ;c<4;c++)
+	{
+		for ( int r = 0 ; r< 4;r++)
+		{
+			state_matrix[r][c] ^= key_schedule[w_ind][c];
+			w_ind++;
+		}
+	}
+}
+
