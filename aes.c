@@ -7,18 +7,18 @@ void pkcs_padding( unsigned char ** , int *);
 
 void SubBytes( unsigned char state[][4] );
 
-void ShiftRows( unsigned char state[][4] , int row_num);
+void ShiftRows( unsigned char state[][4]);
 
 unsigned char g_mult ( unsigned char , unsigned char);
 
 void MixColumns ( unsigned char state[][4]);
 
 void xor_4( unsigned char arr1[4] , unsigned char arr2[4], unsigned char resultant_arr[4]);
-void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44][4]);
+void KeyExpansion( unsigned char initial_key[16]);
 void RotWord( unsigned char key_schedule_row[4]);
 void SubWord( unsigned char key_schedule_row[4]);
 
-void AddRoundKey ( int round_num ,unsigned char key_schedule[44][4], unsigned char state_matrix[4][4] );
+void AddRoundKey ( int round_num , unsigned char state_matrix[4][4] );
 
 static const uint8_t sbox[256] = {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
@@ -70,6 +70,7 @@ unsigned char Rcon[11][4] = {
 	{0x36, 0x00, 0x00, 0x00}
 	};
 
+unsigned char key_schedule[44][4];
 
 int main()
 {
@@ -125,8 +126,7 @@ int main()
 //	}
 
 	unsigned char key[16];
-	unsigned char key_schedule[44][4];
-	KeyExpansion( key, key_schedule);
+	KeyExpansion( key);
 
 	if ( RAND_bytes(key , sizeof(key)) != 1)
 	{
@@ -147,14 +147,58 @@ int main()
 		}
 	}
 
+	unsigned char cipher_buffer[len_input];
+	unsigned char cipher_matrix[4][4];
+	int j=16;
+	i=0;
+	int round = 1;
 	//aes encryption:
-//	for ( int b=1;b<= (len_input/16);b++)
-
-	for ( int round=1;round<= 10;round++)
+	for ( int b=1;b<= (len_input/16);b++)
 	{
+		for ( ;round<= 10;round++)
+		{
+			SubBytes(state_matrix);
+			ShiftRows(state_matrix);
+			MixColumns(state_matrix);
+			AddRoundKey(round , state_matrix);
+		}
+
 		SubBytes(state_matrix);
+		ShiftRows(state_matrix);
+		AddRoundKey(round , state_matrix);
+
+		//storing state into cipher_buffer
+
+		for ( int c=0;c<4;c++)
+		{
+			for ( int r=0;r<4;r++)
+			{
+				cipher_buffer[i] = state_matrix[r][c];// Ciphertext = C1 || C2 || C3...
+				cipher_matrix[r][c] = cipher_buffer[i]; //C1 C2 etc..
+				i++;
+			}
+		}
+
+		// i at end = 16 after 1st block rounds
+		
+		//better the algo for 1 bloc only and understand from joplin
+		
+		for ( int c=0;c<4;c++)
+		{
+			for ( int r=0;r<4;r++)
+			{
+				state_matrix[r][c] = user_input[j]; // creating new block from user_input
+				state_matrix[r][c] ^= cipher_matrix[r][c]; // Pn XOR Cn-1
+				j++;
+			}
+		}
+		// j at end = 32 of block 1 rounds
 	}
 
+	for ( int i = 0 ;i< len_input;i++)
+	{
+		printf("%02x " , cipher_buffer[i]);
+	}
 	return 0;
 }
 
@@ -205,8 +249,9 @@ void SubBytes( unsigned char state[][4])
 }
 
 
-void ShiftRows( unsigned char state[][4] , int row_num)
+void ShiftRows( unsigned char state[][4])
 {
+	int row_num=0;
 	while ( row_num <4)
 	{
 		for ( int times = 0; times < row_num; times++)
@@ -354,7 +399,7 @@ void xor_4( unsigned char arr1[4] , unsigned char arr2[4], unsigned char resulta
 	}
 }
 
-void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44][4])
+void KeyExpansion( unsigned char initial_key[16])
 {
 //	unsigned char key_schedule [44][4];
 	int i =0;
@@ -392,7 +437,7 @@ void KeyExpansion( unsigned char initial_key[16], unsigned char key_schedule[44]
 // 4 words used in each round i.e. 4 rows
 
 
-void AddRoundKey ( int round_num,unsigned char key_schedule[44][4], unsigned char state_matrix[4][4] )
+void AddRoundKey ( int round_num,  unsigned char state_matrix[4][4] )
 {
 	int w_ind = 0;
 	for ( int reference = 0 ; reference < round_num; reference++)
