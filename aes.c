@@ -83,50 +83,19 @@ int main()
 //	printf("User_input:%s\n", user_input);
 	pkcs_padding(&user_input , &len_input); //padding the user_input
 
-//	for ( int i = 0 ; i < len_input;i++)
-//	{
-//		printf("%02x ", user_input[i]);
-//	}
-//	printf("\n");
-//
-
-//	Store the user_input in state_matrix
 	unsigned char state_matrix[4][4];
 	int i=0;
-	for ( int c= 0;c<4;c++) //column wise
-	{
-		for ( int r=0;r<4;r++)
-		{
-			state_matrix[r][c]= user_input[i];
-			i++;
-		}
-	}
-
-
-//	for ( int c=0;c<4;c++)
-//	{
-//		for ( int r = 0 ;r< 4;r++)
-//		{
-//			printf("%02x " , state_matrix[r][c]);
-//		}
-//		printf("\n");
-//	}
-
 
 	unsigned char iv[16];
+	unsigned char key[16];
+	unsigned char cipher_buffer[len_input];
+	unsigned char cipher_matrix[4][4];
+
 	if ( (RAND_bytes(iv , sizeof(iv))) != 1)
 	{
 		printf("IV couldn't be generated\n");
 		return 1;
 	}
-
-//	for ( int i =0;i<16;i++)
-//	{
-//		printf("%02x\n" ,iv[i]);
-//	}
-
-	unsigned char key[16];
-	KeyExpansion( key);
 
 	if ( RAND_bytes(key , sizeof(key)) != 1)
 	{
@@ -134,28 +103,38 @@ int main()
 		return 1;
 	}
 
-	printf("len_input:%d \n" , len_input);
+	KeyExpansion( key);
 
-	//using iv for block 1
 	i=0;
 	for ( int c=0;c<4;c++)
 	{
 		for ( int r = 0;r<4;r++)
 		{
-			state_matrix[r][c] ^= iv[i];
+			cipher_matrix[r][c] = iv[i];
 			i++;
 		}
 	}
 
-	unsigned char cipher_buffer[len_input];
-	unsigned char cipher_matrix[4][4];
-	int j=16;
+
+	int j=0;
 	i=0;
 	int round = 1;
 	//aes encryption:
 	for ( int b=1;b<= (len_input/16);b++)
 	{
-		for ( ;round<= 10;round++)
+
+		for ( int c=0;c<4;c++)
+		{
+			for ( int r=0;r<4;r++)
+			{
+				state_matrix[r][c] = user_input[j]; // creating new block from user_input
+				state_matrix[r][c] ^= cipher_matrix[r][c]; // Pn XOR Cn-1
+				j++;
+			}
+		}
+
+		AddRoundKey(0, state_matrix);
+		for ( ;round<= 9;round++)
 		{
 			SubBytes(state_matrix);
 			ShiftRows(state_matrix);
@@ -165,7 +144,7 @@ int main()
 
 		SubBytes(state_matrix);
 		ShiftRows(state_matrix);
-		AddRoundKey(round , state_matrix);
+		AddRoundKey(10 , state_matrix);
 
 		//storing state into cipher_buffer
 
@@ -179,22 +158,7 @@ int main()
 			}
 		}
 
-		// i at end = 16 after 1st block rounds
-		
-		//better the algo for 1 bloc only and understand from joplin
-		
-		for ( int c=0;c<4;c++)
-		{
-			for ( int r=0;r<4;r++)
-			{
-				state_matrix[r][c] = user_input[j]; // creating new block from user_input
-				state_matrix[r][c] ^= cipher_matrix[r][c]; // Pn XOR Cn-1
-				j++;
-			}
-		}
-		// j at end = 32 of block 1 rounds
 	}
-
 	for ( int i = 0 ;i< len_input;i++)
 	{
 		printf("%02x " , cipher_buffer[i]);
@@ -449,9 +413,12 @@ void AddRoundKey ( int round_num,  unsigned char state_matrix[4][4] )
 	{
 		for ( int r = 0 ; r< 4;r++)
 		{
-			state_matrix[r][c] ^= key_schedule[w_ind][c];
-			w_ind++;
+			state_matrix[r][c] ^= key_schedule[w_ind][r];
+
 		}
+
+		w_ind++;
 	}
 }
+
 
