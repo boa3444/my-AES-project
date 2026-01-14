@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/rand.h>
@@ -118,7 +119,6 @@ int main()
 
 	int j=0;
 	i=0;
-	int round = 1;
 	//aes encryption:
 	for ( int b=1;b<= (len_input/16);b++)
 	{
@@ -134,7 +134,7 @@ int main()
 		}
 
 		AddRoundKey(0, state_matrix);
-		for ( ;round<= 9;round++)
+		for ( int round = 1;round<= 9;round++)
 		{
 			SubBytes(state_matrix);
 			ShiftRows(state_matrix);
@@ -160,11 +160,6 @@ int main()
 
 	}
 
-	printf("len_input: %d" , len_input);
-	for ( int i = 0 ;i< len_input;i++)
-	{
-		printf("%02x " , cipher_buffer[i]);
-	}
 	return 0;
 }
 
@@ -235,7 +230,7 @@ void ShiftRows( unsigned char state[][4])
 	}
 }
 
- 
+
 
 unsigned char g_mult ( unsigned char byte , unsigned char mult_with)
 {
@@ -259,7 +254,10 @@ unsigned char g_mult ( unsigned char byte , unsigned char mult_with)
 	}
 
 	else
+	{
 		printf("Factor problem in GF(2^8) multiplication");
+		return ;
+	}
 }
 
 void MixColumns ( unsigned char state[][4])
