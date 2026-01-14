@@ -159,6 +159,8 @@ int main()
 		}
 
 	}
+
+	printf("len_input: %d" , len_input);
 	for ( int i = 0 ;i< len_input;i++)
 	{
 		printf("%02x " , cipher_buffer[i]);
@@ -295,30 +297,21 @@ void MixColumns ( unsigned char state[][4])
 //	}
 
 	//IDEA2: ( better idea)
-	unsigned char (*arr_poi)[4];
-	for ( int c = 0 ;c< 4;c++)
+	unsigned char temp[4];
+	for (int c = 0; c < 4; c++)
 	{
-		for ( int r =0;r<4;r++)
-		{
-			*arr_poi[r] = state[r][c]; //columns being saved at arr_poi
-		}
+	    // Extract column into temp buffer
+	    for (int r = 0; r < 4; r++)
+	    {
+	        temp[r] = state[r][c];
+	    }
 
-//		for ( int i =0;i< 4;i++)
-//		{
-//			printf("%02x " , *arr_poi[i]);
-//		}
-
-		state[0][c] = g_mult(*arr_poi[0] , 0x02) ^ g_mult(*arr_poi[1], 0x03) ^ *arr_poi[2] ^ *arr_poi[3];
-		state[1][c] = *arr_poi[0] ^ g_mult( *arr_poi[1],0x02) ^ g_mult(*arr_poi[2], 0x03) ^ *arr_poi[3];
-		state[2][c] = *arr_poi[0] ^ *arr_poi[1] ^ g_mult(*arr_poi[2] , 0x02) ^ g_mult(*arr_poi[3] , 0x03);
-		state[3][c] = g_mult(*arr_poi[0] , 0x03) ^ *arr_poi[1] ^ *arr_poi[2] ^ g_mult(*arr_poi[3] , 0x02);
-
-
-
+	    // Perform MixColumns transformation using temp values
+	    state[0][c] = g_mult(temp[0], 0x02) ^ g_mult(temp[1], 0x03) ^ temp[2] ^ temp[3];
+	    state[1][c] = temp[0] ^ g_mult(temp[1], 0x02) ^ g_mult(temp[2], 0x03) ^ temp[3];
+	    state[2][c] = temp[0] ^ temp[1] ^ g_mult(temp[2], 0x02) ^ g_mult(temp[3], 0x03);
+	    state[3][c] = g_mult(temp[0], 0x03) ^ temp[1] ^ temp[2] ^ g_mult(temp[3], 0x02);
 	}
-
-
-
 }
 
 
