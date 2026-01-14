@@ -89,7 +89,9 @@ int main()
 
 	unsigned char iv[16];
 	unsigned char key[16];
-	unsigned char cipher_buffer[len_input];
+			
+	unsigned char *cipher_buffer = (unsigned char *)malloc((size_t)len_input);
+//	unsigned char cipher_buffer[len_input];
 	unsigned char cipher_matrix[4][4];
 
 	if ( (RAND_bytes(iv , sizeof(iv))) != 1)
